@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+
+
+  <head>
+
+    <link rel="stylesheet" href="DataTables/webpage.css">
+    <script src="DataTables/jQuery-3.3.1/jquery-3.3.1.min.js"></script>
+    <script src="DataTables/DataTables-1.10.18/js/jquery.dataTables.min.js"></script>
+    <link href="https://fonts.googleapis.com/css?family=Roboto+Mono&display=swap" rel="stylesheet">
+    <style>
+      .dataTables_wrapper .myfilter .dataTables_filter {
+          padding-left: 10px;
+          float:left
+      }
+      .dataTables_wrapper .mylength .dataTables_length {
+        padding-left: 80px;
+        padding-bottom: 10px;
+          float:left
+      }
+    </style>
+
+  </head>
+  
+
+  <body>
+  
+    <!-- WEBPAGE HEADER TITLE -->
+    <div style="width: 100%; font-family:'Roboto Mono'; font-size: 22pt; color: #9e9e9e">
+      <table style="border-collapse:collapse;width:100%">
+        <tr>
+          <td style="width:160px;">
+            <img src="Nikhef-logo-black-1.png" alt="HTML5 Icon" style="opacity:0.4;filter:alpha(opacity=40);height:50px;">
+          </td>
+          <td style="padding-bottom:11px">
+            Example job monitoring
+          </td>
+        </tr>
+      </table>
+    </div>
+  
+    <!-- WEBPAGE HEADER SUBTITLE -->
+    <br>
+    <div style="width: 100%; font-size: 11pt; color: #bbbbbb">
+      Developed by Alice Alfonsi. For issues or suggestions, please send an email to alice.alfonsi@workmail.com
+    </div>
+  
+    <!-- WEBPAGE HEADER COLOURBAR -->
+    <br>
+    <table style="border-collapse:collapse;height:4px;width:100%;border-radius:0px">
+      <tr>
+        <td style="width:20%;background-color:rgb(222,209,138);"></td>
+        <td style="width:20%;background-color:rgb(186,52,59);"></td>
+        <td style="width:20%;background-color:rgb(94,40,104);"></td>
+        <td style="width:20%;background-color:rgb(74,168,186);"></td>
+      </tr>
+    </table>
+    
+    <!-- TABLE SKELETON -->
+    <br>
+    <table id="events" class="display">
+      <thead>
+        <tr>
+          <th>USER</th>
+          <th>E-GROUP</th>
+          <th>JOB NAME</th>
+          <th>STATUS</th>
+          <th>QUEUE</th>
+          <th>WALLTIME USED</th>                
+        </tr>
+      </thead>
+      <tbody>
+      </tbody>
+    </table>
+  
+  </body>
+  
+
+</html>
+  
+
+
+<!-- JQUERY SCRIPT -->
+<script type="text/javascript">
+
+  // TABLE GRAPHIC SETTINGS
+  var thisTable = $("#events").dataTable( {
+        "deferRender": true,
+        "orderClasses": false,
+        "paging":   true,
+        "ordering": false,
+        "info":     false,
+        "pageLength": 10,
+        "language": {
+          "emptyTable": "Loading table data..."
+        },
+        dom:"<'myfilter'f><'mylength'l>t<'bottom'p><'clear'>",
+        buttons: [
+          'colvis',
+          'excel',
+          'print'
+        ],
+        columnDefs: [
+          { className: 'text-center', targets: [1,2] }
+        ]
+      });
+
+  // TABLE CREATION
+  $.ajax({
+    url:"qstatOut.xml",
+    type:"POST",
+    success: function(response){
+      var $events = $(response).find("Job");  
+      $events.each(function(index, event){
+        var $event = $(event),
+            addData = [],
+            // $kids = $event.children("job_state, queue, euser, Job_Name, egroup")
+            $jobState = $event.children("job_state"),
+            $queue = $event.children("queue"),
+            $jobName = $event.children("Job_Name"),
+            $egroup = $event.children("egroup"),
+            $euser = $event.children("euser"),
+            $walltime = $event.find("Resource_List").children("walltime"),
+            $remainingtime = $event.find("Walltime").children("Remaining");
+
+        $euser.each(function(i, child){
+          addData.push($(child).text());
+        });
+
+        $egroup.each(function(i, child){
+          addData.push($(child).text());
+        });
+
+        $jobName.each(function(i, child){
+          addData.push($(child).text());
+        });
+
+        $jobState.each(function(i, child){
+          if ($(child).text() == "C") { $status = "complete"; }
+          if ($(child).text() == "Q") { $status = "queued"; }
+          if ($(child).text() == "R") { $status = "running"; }
+          addData.push($status);
+        });
+
+        $queue.each(function(i, child){
+          addData.push($(child).text());
+        });
+      
+        for (var i = 0; i < $walltime.length; i++) {
+          var wSplit = ($($walltime[i]).text()).split(':');
+          var $wSeconds = (+wSplit[0]) * 60 * 60 + (+wSplit[1]) * 60 + (+wSplit[2]); 
+          var $elapstime = $wSeconds - $($remainingtime[i]).text();
+          var $H = $elapstime / 3600;
+          var $i = ($elapstime / 60) % 60;
+          var $s = $elapstime % 60;
+          var $perc = 100*$elapstime/$wSeconds;
+          // addData.push($wSeconds);
+          addData.push(Number(Math.round(parseFloat($perc+'e'+2))+'e-'+2).toFixed(2)+"%");
+        }
+                    
+        thisTable.fnAddData(addData);
+      });
+    }
+  });
+</script>
