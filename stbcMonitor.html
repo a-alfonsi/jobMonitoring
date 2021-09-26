@@ -107,15 +107,15 @@
       var $events = $(response).find("Job");  
       $events.each(function(index, event){
         var $event = $(event),
-            addData = [],
-            // $kids = $event.children("job_state, queue, euser, Job_Name, egroup")
-            $jobState = $event.children("job_state"),
-            $queue = $event.children("queue"),
-            $jobName = $event.children("Job_Name"),
-            $egroup = $event.children("egroup"),
-            $euser = $event.children("euser"),
-            $walltime = $event.find("Resource_List").children("walltime"),
-            $remainingtime = $event.find("Walltime").children("Remaining");
+          addData = [],
+          // $kids = $event.children("job_state, queue, euser, Job_Name, egroup")
+          $jobState = $event.children("job_state"),
+          $queue = $event.children("queue"),
+          $jobName = $event.children("Job_Name"),
+          $egroup = $event.children("egroup"),
+          $euser = $event.children("euser"),
+          $walltime = $event.find("Resource_List").children("walltime"),
+          $remainingtime = $event.find("Walltime").children("Remaining");
 
         $euser.each(function(i, child){
           addData.push($(child).text());
